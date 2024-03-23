@@ -1,0 +1,109 @@
+version: "3"
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: ./docker/php83-cli/Dockerfile
+    volumes:
+      - .:/app
+    networks:
+      - app-network
+    ports:
+      - "8080:8080"
+
+  # Redis Single
+  redis:
+    image: redis:latest
+    networks:
+      - app-network
+
+  # Redis Sentinel
+  redis-sentinel-0:
+    image: bitnami/redis:7.2
+    networks:
+      - app-network
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - REDIS_PASSWORD=str0ng_passw0rd
+
+  redis-sentinel-1:
+    image: bitnami/redis:7.2
+    networks:
+      - app-network
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-sentinel-0
+      - REDIS_MASTER_PASSWORD=str0ng_passw0rd
+      - REDIS_PASSWORD=str0ng_passw0rd
+
+  redis-sentinel:
+    image: bitnami/redis-sentinel:7.2
+    networks:
+      - app-network
+    environment:
+      - REDIS_MASTER_PASSWORD=str0ng_passw0rd
+    depends_on:
+      - redis-sentinel-0
+      - redis-sentinel-1
+
+  # Redis Cluster
+  redis-cluster-0:
+    image: docker.io/bitnami/redis-cluster:7.2
+    networks:
+      - app-network
+    environment:
+      - 'REDIS_NODES=redis-cluster-0 redis-cluster-1 redis-cluster-2 redis-cluster-3 redis-cluster-4 redis-cluster-5'
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+
+  redis-cluster-1:
+    image: docker.io/bitnami/redis-cluster:7.2
+    networks:
+      - app-network
+    environment:
+      - 'REDIS_NODES=redis-cluster-0 redis-cluster-1 redis-cluster-2 redis-cluster-3 redis-cluster-4 redis-cluster-5'
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+
+  redis-cluster-2:
+    image: docker.io/bitnami/redis-cluster:7.2
+    networks:
+      - app-network
+    environment:
+      - 'REDIS_NODES=redis-cluster-0 redis-cluster-1 redis-cluster-2 redis-cluster-3 redis-cluster-4 redis-cluster-5'
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+
+  redis-cluster-3:
+    image: docker.io/bitnami/redis-cluster:7.2
+    networks:
+      - app-network
+    environment:
+      - 'REDIS_NODES=redis-cluster-0 redis-cluster-1 redis-cluster-2 redis-cluster-3 redis-cluster-4 redis-cluster-5'
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+
+  redis-cluster-4:
+    image: docker.io/bitnami/redis-cluster:7.2
+    networks:
+      - app-network
+    environment:
+      - 'REDIS_NODES=redis-cluster-0 redis-cluster-1 redis-cluster-2 redis-cluster-3 redis-cluster-4 redis-cluster-5'
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+
+  redis-cluster-5:
+    image: docker.io/bitnami/redis-cluster:7.2
+    networks:
+      - app-network
+    depends_on:
+      - redis-cluster-0
+      - redis-cluster-1
+      - redis-cluster-2
+      - redis-cluster-3
+      - redis-cluster-4
+    environment:
+      - 'REDIS_CLUSTER_REPLICAS=1'
+      - 'REDIS_NODES=redis-cluster-0 redis-cluster-1 redis-cluster-2 redis-cluster-3 redis-cluster-4 redis-cluster-5'
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+      - 'REDIS_CLUSTER_CREATOR=yes'
+
+networks:
+  app-network:
+    driver: bridge
